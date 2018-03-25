@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Collections.Generic;
 using System.Globalization;
@@ -10,15 +11,35 @@ namespace blog.NullObjectSingletonPatterns
     {
         static void Main(string[] args)
         {
-            WriteLine("Hello World!");
+            AssertSingleton();
+            ProcessPayments();
+        }
+
+        private static void ProcessPayments()
+        {
+            var paymentProviders = new[] { "Paypal", "ApplePay", "GooglePay", "Braintree" };
+            foreach (var paymentProvider in paymentProviders)
+            {
+                var paymentProcessor = PaymentStrategyFactory.Create(paymentProvider);
+                WriteLine($"===== Processing with '{paymentProvider}' Provider =====");
+                var paymentStatus = paymentProcessor.Process(111);
+                WriteLine($"\tPayment Status: {paymentStatus}");
+            }
+        }
+
+        private static void AssertSingleton()
+        {
+            var nullProcessor1 = PaymentStrategyFactory.Create("Non Existence Payment Provider111");
+            var nullProcessor2 = PaymentStrategyFactory.Create("Non Existence Payment Provider222");
+            Debug.Assert(nullProcessor1 == nullProcessor2);
         }
     }
 
     public static class PaymentStrategyFactory
     {
-        public static IPaymentStrategy Create(string paymentProviderName)
+        public static IPaymentStrategy Create(string paymentProvider)
         {
-            switch (paymentProviderName)
+            switch (paymentProvider)
             {
                 case "Paypal": return new PaypalPaymentStrategy();
                 case "ApplePay": return new ApplePayPaymentStrategy();
@@ -32,12 +53,12 @@ namespace blog.NullObjectSingletonPatterns
 
     public interface IPaymentStrategy
     {
-        ProcessStatus ProcessPayment(double amount);
+        ProcessStatus Process(double amount);
     }
 
     public abstract class RandomPaymentStrategy : IPaymentStrategy
     {
-        public ProcessStatus ProcessPayment(double amount)
+        public ProcessStatus Process(double amount)
         {
             var random = new Random();
             return (ProcessStatus)random.Next(0, 1);
@@ -55,10 +76,9 @@ namespace blog.NullObjectSingletonPatterns
         public static readonly IPaymentStrategy Instance = new NullPaymentStrategy();
         private NullPaymentStrategy() { }
 
-        public ProcessStatus ProcessPayment(double amount)
+        public ProcessStatus Process(double amount)
         {
             return ProcessStatus.NoOp;
         }
     }
-
 }
