@@ -14,70 +14,51 @@ namespace blog.NullObjectSingletonPatterns
         }
     }
 
-    public interface IOrderRepository
+    public static class PaymentStrategyFactory
     {
-        IOrder GetOrderById(int id);
-    }
-
-    public class OrderRepository : IOrderRepository
-    {
-        private static List<Order> Orders = new List<Order>{
-            new Order(id: 1, quantity: 40, orderDate: new DateTime(2018, 1,1,1,1,1,1)),
-            new Order(id: 2, quantity: 20, orderDate: new DateTime(2018, 2,2,2,2,2,2)),
-            new Order(id: 3, quantity: 30, orderDate: new DateTime(2018, 3,3,3,3,3,3)),
-            new Order(id: 4, quantity: 10, orderDate: new DateTime(2018, 4,4,4,4,4,4)),
-            new Order(id: 5, quantity: 20, orderDate: new DateTime(2018, 5,5,5,5,5,5)),
-        };
-
-        public IOrder GetOrderById(int id)
+        public static IPaymentStrategy Create(string paymentProviderName)
         {
-            // You might search database for an Order here.
-            return Orders.FirstOrDefault(order => order.Id == id) ?? NullOrder.Instance;
+            switch (paymentProviderName)
+            {
+                case "Paypal": return new PaypalPaymentStrategy();
+                case "ApplePay": return new ApplePayPaymentStrategy();
+                default: return NullPaymentStrategy.Instance;
+            }
         }
     }
 
-    public interface IOrder
+    // "NoOp" means No Operation: https://en.wikipedia.org/wiki/NOP
+    public enum ProcessStatus { Successful, Failed, NoOp }
+
+    public interface IPaymentStrategy
     {
-        int Id { get; }
-        int Quantity { get; }
-        DateTime OrderDate { get; }
+        ProcessStatus ProcessPayment(double amount);
     }
 
-    public class Order : IOrder
+    public abstract class RandomPaymentStrategy : IPaymentStrategy
     {
-        public int Id { get; }
-        public int Quantity { get; }
-        public DateTime OrderDate { get; }
-
-        public Order(int id, int quantity, DateTime orderDate)
+        public ProcessStatus ProcessPayment(double amount)
         {
-            Id = id;
-            Quantity = quantity;
-            OrderDate = orderDate;
-        }
-
-        public override string ToString()
-        {
-            return $"Order ID: {Id}, Quantity: {Quantity}, Order Date: {OrderDate.ToString("dd MMM yyyy hh:mm tt p\\s\\t", CultureInfo.InvariantCulture)}";
+            var random = new Random();
+            return (ProcessStatus)random.Next(0, 1);
         }
     }
 
-    public class NullOrder : IOrder
+    public class PaypalPaymentStrategy : RandomPaymentStrategy { }
+
+    public class ApplePayPaymentStrategy : RandomPaymentStrategy { }
+
+    public class NullPaymentStrategy : IPaymentStrategy
     {
-        /// <summary>
-        /// Singleton instance
-        /// </summary>
-        /// <remark>
-        /// Reference: .NET Optimized version in <see ref="http://www.dofactory.com/net/singleton-design-pattern">Do Factory</see>
-        /// </remark>
-        public static readonly IOrder Instance { get; } = new NullOrder();
+        // .NET optimized version of Singleton
+        // Reference: http://www.dofactory.com/net/singleton-design-pattern
+        public static readonly IPaymentStrategy Instance = new NullPaymentStrategy();
+        private NullPaymentStrategy() { }
 
-        private NullOrder() { }
-
-        public int Id => throw new NotImplementedException();
-
-        public int Quantity => throw new NotImplementedException();
-
-        public DateTime OrderDate => throw new NotImplementedException();
+        public ProcessStatus ProcessPayment(double amount)
+        {
+            return ProcessStatus.NoOp;
+        }
     }
+
 }
