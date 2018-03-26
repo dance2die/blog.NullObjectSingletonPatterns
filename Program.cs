@@ -68,8 +68,8 @@ namespace blog.NullObjectSingletonPatterns
         public ProcessStatus Process(double amount)
         {
             var random = new Random();
-            // Random number between 0 & 1 for either "Successful" or "Failed" status.
-            return (ProcessStatus)random.Next(0, 2);
+            var randomValue = random.Next(0, 2);
+            return (ProcessStatus)Math.Min(randomValue, 2);
         }
     }
 
