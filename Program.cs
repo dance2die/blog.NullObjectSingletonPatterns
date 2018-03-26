@@ -17,13 +17,19 @@ namespace blog.NullObjectSingletonPatterns
 
         private static void ProcessPayments()
         {
-            var paymentProviders = new[] { "Paypal", "ApplePay", "GooglePay", "Braintree" };
+            var paymentProviders = new[] {
+                "Paypal", "ApplePay", "GooglePay",
+                "Braintree", "PayPal", "ApplePay",
+                "ApplePay", "BadPaymentProvider" };
             foreach (var paymentProvider in paymentProviders)
             {
                 var paymentProcessor = PaymentStrategyFactory.Create(paymentProvider);
                 WriteLine($"===== Processing with '{paymentProvider}' Provider =====");
+
+                // There is no need to check if the payment processor is null here
+                // Reduced Cyclomatic Complexity.
                 var paymentStatus = paymentProcessor.Process(111);
-                WriteLine($"\tPayment Status: {paymentStatus}");
+                WriteLine($"--> {paymentStatus}");
             }
         }
 
@@ -49,6 +55,7 @@ namespace blog.NullObjectSingletonPatterns
     }
 
     // "NoOp" means No Operation: https://en.wikipedia.org/wiki/NOP
+    // First value is assigned a value of 0 by default.
     public enum ProcessStatus { Successful, Failed, NoOp }
 
     public interface IPaymentStrategy
@@ -61,7 +68,8 @@ namespace blog.NullObjectSingletonPatterns
         public ProcessStatus Process(double amount)
         {
             var random = new Random();
-            return (ProcessStatus)random.Next(0, 1);
+            // Random number between 0 & 1 for either "Successful" or "Failed" status.
+            return (ProcessStatus)random.Next(0, 2);
         }
     }
 
