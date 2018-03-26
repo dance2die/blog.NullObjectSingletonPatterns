@@ -1,6 +1,6 @@
 # Source for a blog entry
 
-## A valid usage of Singleton Pattern (with Null object Pattern)
+A valid usage of Singleton Pattern (with Null object Pattern)
 
 # How to run
 
